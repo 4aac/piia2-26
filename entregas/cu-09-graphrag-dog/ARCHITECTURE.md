@@ -1,6 +1,6 @@
 # ARCHITECTURE.md - CU-09
 
-## Diagrama de a    rquitectura
+## Diagrama de arquitectura
 
 ```mermaid
 flowchart TD
