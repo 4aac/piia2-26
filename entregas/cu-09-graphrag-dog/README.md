@@ -1,9 +1,9 @@
-- ¿Qué es el proyecto?
+## ¿Qué es el proyecto?
 Este proyecto se entabla en el caso de uso 9 (CU-9), en colaboración la empresa gallega de inteligencia artificial Imaxin. Este caso de uso consisten en crear un sistema RAG (Retrieval Augmented Generation) enmarcado en el ámbito legal para responder a consultas relacionadas con el DOG (Diario Oficial de Galicia). El objetivo es desarrollar un clasificador de consultas que permita mediante agentes, consultar la nueva arquitectura para responder a las preguntas propuestas.
 
 ---
 
-- ¿Qué problema resuelve?
+## ¿Qué problema resuelve?
 El problema principal consistía en que el sistema RAG anterior, llamado Lynx, era muy simple. En casos complejos, como la consulta de múltiples documentos, cruces de información o en conversaciones con contextos muy largos, el modelo se perdía y no era capaz de formular una respuesta correcta.
 
 Como solución hemos decidido crear un sistema más complejo y completo de cinco fases que clasifique una consulta según su respuesta y la redirija al motor de búsqueda correcto basado en la complejidad de esta respuesta:
@@ -18,7 +18,7 @@ Esto nos permite mejorar la recuperación de información y resolver consultas m
 
 ---
 
-- ¿Por qué hemos escogido este proyecto?
+## ¿Por qué hemos escogido este proyecto?
 Hemos escogido este proyecto principalmente porque todos los integrantes del grupo tenemos claro que una vez finalizado el grado, nos gustaría dedicarnos al trabajo en empresa. Este caso de uso es una oportunidad de demostrar que podemos colaborar con una entidad y crear un proyecto complejo, autónomamente, solucionando un problema real, que finalmente se integrará en el código base de la empresa y los clientes le darán un uso.
 
 Por otro lado, nos gustaba la idea de trabajar con Imaxin. Las empresas en Galicia suelen pertenecer a sectores más tradicionales o menos tecnológicos, por lo que cuando descubrimos a Imaxin no dudamos. Poder participar con una empresa de IA puntera a nivel regional y nacional, con un equipo tan experimentado y completo era uno de nuestros objetivos para poder desarrollarnos como estudiantes.
@@ -27,7 +27,7 @@ Finalmente, el tema era un reto relacionado con temas que habíamos estudiado en
 
 ---
 
-- Nuestra solución:
+## Nuestra solución:
 La solución se estructura en cinco fases:
 1. Gestión de memoria conversacional
 2. Enrutamiento de consultas
@@ -40,7 +40,7 @@ tradicional, Elasticsearch y GraphRAG) según el tipo de consulta del usuario. A
 
 ---
 
-- ¿Qué entra en el proyecto y qué queda fuera?
+## ¿Qué entra en el proyecto y qué queda fuera?
 
 El proyecto se centra en ampliar las consultas que puede resolver Lynx sobre los documentos del DOG disponibles en la infraestructura de Imaxin. Partimos del RAG tradicional que ya tiene la empresa y desarrollamos los componentes necesarios para elegir cómo recuperar la información, mantener el contexto de la conversación y generar respuestas con las fuentes utilizadas.
 
@@ -65,14 +65,14 @@ El trabajo depende del acceso por VPN a los datos de Imaxin, de la API de Lynx y
 
 ---
 
-- Equipo:
+## Equipo:
   - Asier Acuña Casal (asier.acuna@rai.usc.es)
   - Iago Calvo Cuervo (iago.calvo.cuervo@rai.usc.es)
   - Martín Casais Blanco (martin.casais@rai.usc.es)
 
 ---
 
-- Estructura del repositorio:
+## Estructura del repositorio:
 
 ```text
 cu-09-graphrag-dog/
