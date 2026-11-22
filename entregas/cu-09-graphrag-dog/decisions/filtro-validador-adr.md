@@ -16,7 +16,7 @@ El filtro validador (Fase 4, JEV) usa como juez de relevancia el mismo modelo lo
 
 - Normalización de modelos. En el proyecto ya se utiliza Ollama mediante `src/llm_aux.py` (`_call_llm`), con herramientas como Langfuse para el trazado. Esta reutilización evita la necesidad de nuevas dependencias o servicios y enviar documentos fuera.
 
-- Seguridad de respuesta. Es mejor descartar que aceptar la respuesta en caso de dudas, ya que si el filtro deja pasar ruido, la fase 5 de generación lo citará como fuente, lo cual es sensible al estar tratando con documentación legal. Si no hay documentos citados, debe indicarse en la fase de generación que no se ha encontrado información, siendo este un fallo honesto, y no inventar citas o referencias.
+- Seguridad de respuesta. Es mejor descartar que aceptar la respuesta en caso de dudas, ya que si el filtro deja pasar ruido, la fase 5 de generación lo citará como fuente, lo cual es sensible al estar tratando con documentación legal. Si no hay documentos citados, debe indicarse en la fase de generación que no se ha encontrado información y no inventar citas o referencias.
 
 ## Alternativas
 
