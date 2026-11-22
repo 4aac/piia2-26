@@ -100,3 +100,20 @@ cu-09/
 - [README_GRAPHRAG.md](README_GRAPHRAG.md) y [README_neo4j.md](README_neo4j.md): explican la ruta C, su configuración y los requisitos de acceso al grafo.
 - [__main__.py](__main__.py): ejecuta ejemplos de las rutas A, B y C y una pregunta de seguimiento, sin entrada interactiva. El indicador `OK` comprueba el enrutamiento, no la calidad factual de la respuesta.
 - [tests/](tests/): contiene las pruebas automatizadas de los componentes y de su integración con mocks.
+├── ARCHITECTURE.md
+├── specs/
+│   ├── elasticsearch-listados-agregaciones.md
+│   └── motor-graphrag.md
+├── decisions/
+│   ├── llm-extrae-parametros-codigo-construye-consultas.md
+│   └── mock-decision.md
+└── presentacion/
+    └── presentacion.md
+```
+
+- [README.md](README.md): explica el caso de uso, el problema que queremos resolver, la motivación del equipo y los límites del proyecto.
+- [ARCHITECTURE.md](ARCHITECTURE.md): describe las cinco fases de la solución, sus componentes y cómo se comunican entre sí.
+- [specs/](specs/): contiene las especificaciones de los motores de Elasticsearch y GraphRAG, con sus responsabilidades, restricciones y criterios de aceptación. Ambos forman parte de la fase de recuperación de información de la arquitectura.
+- [decisions/](decisions/): recoge las decisiones de implementación (ADRs), con su motivación, las alternativas consideradas y referencias:
+  - [El LLM extrae parámetros y el código construye las consultas](decisions/llm-extrae-parametros-codigo-construye-consultas.md): por qué los motores de Elasticsearch y GraphRAG no dejan que el LLM escriba consultas DSL o Cypher.
+- [presentacion/](presentacion/): carpeta destinada a la presentación y los recursos de la demo. Actualmente contiene una nota de ejemplo con las indicaciones para prepararla.
