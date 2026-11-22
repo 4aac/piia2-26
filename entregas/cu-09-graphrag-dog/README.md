@@ -6,34 +6,34 @@ Este proyecto se enmarca en el caso de uso 9 (CU-9), en colaboración con la emp
 ## ¿Qué problema resuelve?
 El problema principal consistía en que el sistema RAG anterior, llamado Lynx, era muy simple. En casos complejos, como la consulta de múltiples documentos, cruces de información o en conversaciones con contextos muy largos, el modelo se perdía y no era capaz de formular una respuesta correcta.
 
-Como solución hemos decidido crear un sistema más completo de cinco fases: memoria de sesión, enrutamiento, recuperación, filtrado y generación (detalladas en «Nuestra solución»). El enrutador clasifica la consulta mediante reglas y el análisis de una respuesta hipotética como borrador, y la redirige al motor de recuperación adecuado según el tipo de información que necesita. Dentro de la fase de recuperación existen tres mecanismos: RAG tradicional, Elasticsearch y GraphRAG.
+Como solución hemos decidido crear un sistema más completo de cinco fases: memoria de la sesión, enrutamiento, recuperación, filtrado y generación (detalladas en «Nuestra solución»). El enrutador clasifica la consulta mediante reglas y el análisis de una respuesta hipotética como borrador, y la redirige al motor de recuperación adecuado según el tipo de información que necesita. Dentro de la fase de recuperación existen tres mecanismos: RAG tradicional, Elasticsearch y GraphRAG.
 
-A) El primero es el **RAG tradicional** existente en Lynx, que integramos mediante su API para recuperar una respuesta y los fragmentos de texto utilizados cuando se buscan datos específicos, como el plazo de solicitud de una ayuda.
+A) El primero es el **RAG tradicional**, que utiliza Qdrant y Elasticsearch para localizar  ragmentos de texto relevantes cuando se buscan datos específicos, como el plazo de solicitud de una ayuda.
 
-B) El segundo mecanismo utiliza **Elasticsearch** directamente, aprovechando los metadatos de los documentos, como la entidad, la sección, la subsección o la fecha, para realizar filtros y obtener listados. El recuento exhaustivo de publicaciones únicas sigue pendiente de implementación.
+B) El segundo mecanismo utiliza **Elasticsearch** directamente, aprovechando los metadatos de los documentos, como la entidad, la sección, la subsección o la fecha, para realizar filtros y obtener listados y conteos concretos.
 
-C) El tercer mecanismo incorpora una primera implementación de **GraphRAG** sobre Neo4j, que busca las normas citadas en la pregunta y recupera sus relaciones directas, a un salto. Su validación contra el grafo real de la empresa sigue pendiente.
+C) El tercer mecanismo incorpora **GraphRAG**, basado en una estructura de grafos que relaciona entidades, normativas y requisitos, permitiendo recuperar información conectada de diferentes documentos.
 
 Con esto buscamos mejorar la recuperación de información y resolver consultas más complejas que las abordadas mediante la estrategia de búsqueda original de Imaxin.
 
 ---
 
 ## ¿Por qué hemos escogido este proyecto?
-Hemos escogido este proyecto principalmente porque todos los integrantes del grupo tenemos claro que una vez finalizado el grado, nos gustaría dedicarnos al trabajo en empresa. Este caso de uso es una oportunidad de demostrar que podemos colaborar con una entidad y crear un proyecto complejo, autónomamente, solucionando un problema real, que finalmente se integrará en el código base de la empresa y los clientes le darán un uso.
+Hemos escogido este proyecto principalmente porque todos los integrantes del grupo tenemos claro que una vez finalizado el grado, nos gustaría dedicarnos al trabajo en una empresa. Este caso de uso es una oportunidad de demostrar que podemos colaborar con una entidad y crear un proyecto complejo, autónomamente, solucionando un problema real, que finalmente se integrará en el código base de la empresa y los clientes le darán un uso.
 
 Por otro lado, nos gustaba la idea de trabajar con Imaxin. Las empresas en Galicia suelen pertenecer a sectores más tradicionales o menos tecnológicos, por lo que cuando descubrimos a Imaxin no dudamos. Poder participar con una empresa de IA puntera a nivel regional y nacional, con un equipo tan experimentado y completo era uno de nuestros objetivos para poder desarrollarnos como estudiantes.
 
-Finalmente, el tema era un reto relacionado con temas que habíamos estudiado en clase, pero bastante más avanzado. De tal manera que podríamos aplicar nuestros conocimientos, aprender nuevas metodologías y usar herramientas como LiteLLM, Qdrant o ElasticSearch, que no habíamos usado nunca.
+Finalmente, el tema era un reto relacionado con contenidos que habíamos estudiado en clase, pero bastante más avanzado. De tal manera que podríamos aplicar nuestros conocimientos, aprender nuevas metodologías y usar herramientas como LiteLLM, Qdrant o ElasticSearch, que no habíamos usado nunca.
 
 ---
 
 ## Nuestra solución:
 La solución se estructura en cinco fases:
-1. Gestión de memoria conversacional
+1. Gestión de la memoria conversacional
 2. Enrutamiento de consultas
 3. Recuperación de información
 4. Filtrado de relevancia de las evidencias
-5. Generación de respuestas fundamentadas.
+5. Generación de respuestas fundamentadas
 
 El diagrama de arquitectura, la descripción de cada componente y el flujo entre ellos están en [ARCHITECTURE.md](ARCHITECTURE.md), y las decisiones de implementación en [decisions/](decisions/).
 
@@ -97,10 +97,11 @@ cu-09-graphrag-dog/
 - [decisions/](decisions/): recoge las decisiones de implementación (ADRs), con su motivación, las alternativas consideradas y referencias:
   - [El LLM extrae parámetros y el código construye las consultas](decisions/llm-extrae-parametros-codigo-construye-consultas.md): por qué los motores de Elasticsearch y GraphRAG no dejan que el LLM escriba consultas DSL o Cypher.
   - [Filtro validador con un LLM como juez](decisions/filtro-validador-adr.md): cómo funciona el JEV de la Fase 4 y por qué solo se aplica a la ruta A.
-- [presentacion/](presentacion/): carpeta destinada a la presentación y los recursos de la demo. Actualmente contiene una nota de ejemplo con las indicaciones para prepararla.
+- [presentacion/](presentacion/): carpeta destinada a la presentación y los recursos de la demo. 
+
 
 ### Código del proyecto
-El código está en un repositorio aparte (`4aac/cu-09`), que no forma parte de esta entrega, así que las rutas siguientes no se pueden abrir desde aquí. Su estructura principal, resumida, es:
+El código está en un repositorio aparte, que no forma parte de esta entrega, así que las rutas siguientes no se pueden abrir desde aquí. Su estructura principal, resumida, es:
 
 ```text
 cu-09/
@@ -126,6 +127,5 @@ cu-09/
 - `README.md`: describe la instalación, la configuración compartida, las cinco fases y la ejecución del pipeline.
 - `src/pipeline/`: conecta la memoria, el enrutador, los motores, el filtrado y la generación de respuestas.
 - `src/deep_memory/` (Fase 1), `src/router/` (Fase 2), `src/retrieval_engine/` (Fase 3), `src/noise_filter/` (Fase 4) y `src/final_response/` (Fase 5): contienen los componentes de las cinco fases y sus guías disponibles.
-- `README_GRAPHRAG.md` y `README_neo4j.md`: explican la ruta C, su configuración y los requisitos de acceso al grafo.
 - `__main__.py`: ejecuta ejemplos de las rutas A, B y C y una pregunta de seguimiento, sin entrada interactiva. El indicador `OK` comprueba el enrutamiento, no la calidad factual de la respuesta.
 - `tests/`: contiene las pruebas automatizadas de los componentes y de su integración con mocks.

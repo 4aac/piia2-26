@@ -4,14 +4,14 @@
 
 ```mermaid
 flowchart TD
-    U[Usuario] -->|pregunta + id de sesión| M["FASE 1 · Memoria profunda"]
-    M -->|consulta reformulada| A["FASE 2 · Enrutador agéntico"]
+    U[Usuario] -->|pregunta + id de sesión| M["FASE 1 - Memoria profunda"]
+    M -->|consulta reformulada| A["FASE 2 - Enrutador agéntico"]
 
-    subgraph R["FASE 3 · Motores de recuperación"]
+    subgraph R["FASE 3 - Motores de recuperación"]
         direction LR
-        RAG["3A · RAG tradicional"]
-        ES["3B · Elasticsearch puro"]
-        G["3C · GraphRAG"]
+        RAG["3A - RAG tradicional"]
+        ES["3B - Elasticsearch puro"]
+        G["3C - GraphRAG"]
     end
 
     A -->|ruta A + borrador| RAG
@@ -19,17 +19,17 @@ flowchart TD
     A -->|ruta C + borrador| G
 
     RAG <-->|pregunta / respuesta + fragmentos| LYNX[("API de Lynx")]
-    ES <-->|consulta bool de lectura| IDX[("Elasticsearch · doga-publications")]
+    ES <-->|consulta bool de lectura| IDX[("Elasticsearch - doga-publications")]
     G <-->|Cypher de solo lectura| NEO[("Neo4j")]
 
-    RAG -->|respuesta, URL y fragmentos| F["FASE 4 · Filtrado según la ruta"]
+    RAG -->|respuesta, URL y fragmentos| F["FASE 4 - Filtrado según la ruta"]
     ES -->|publicaciones agrupadas| F
     G -->|normas relacionadas y su texto| F
-    F -->|evidencias seleccionadas| L["FASE 5 · Generación multi-evidencia"]
+    F -->|evidencias seleccionadas| L["FASE 5 - Generación multi-evidencia"]
     L -->|respuesta con citas| O[Resultado]
     L -. turno y documentos citados .-> M
 
-    LLM[["Ollama vía LiteLLM · un único modelo (OLLAMA_MODEL)"]]
+    LLM[["Ollama vía LiteLLM - un único modelo (OLLAMA_MODEL)"]]
     M -. reformulación y resumen .-> LLM
     A -. borrador y clasificación .-> LLM
     ES -. extracción de filtros .-> LLM
@@ -53,19 +53,19 @@ Los cilindros son servicios de Imaxin que solo consultamos. Todas las fases usan
 - **Motores de recuperación:** permiten obtener información mediante tres estrategias diferentes.
   - **RAG tradicional:** esta opción estaba previamente implementada por el equipo de Imaxin. Se integra mediante la API de Lynx, que devuelve para un solo documento la respuesta, su URL y tres fragmentos (el usado y sus vecinos).
   - **Elasticsearch puro** ([spec](specs/elasticsearch-listados-agregaciones.md)): extrae con un LLM los filtros de la consulta, valida sus valores contra los que existen en el índice (que se consultan en cada pregunta) y busca por entidad, sección, subsección, fecha, idioma e identificadores. Si un valor no existe, la ruta se queda sin fuentes. Recupera todos los fragmentos coincidentes; el pipeline los agrupa por `file_id` y conserva hasta 20 publicaciones y dos fragmentos por publicación para la generación. El idioma es opcional y siguen pendientes los recuentos exhaustivos de publicaciones únicas, las agregaciones y el total de resultados. La forma de construir la consulta está en el [ADR](decisions/llm-extrae-parametros-codigo-construye-consultas.md).
-  - **GraphRAG** ([spec](specs/motor-graphrag.md)): utiliza Neo4j para buscar las normas citadas en la pregunta y recuperar sus relaciones directas, a un salto, mediante consultas Cypher fijas de solo lectura que no dependen del esquema del grafo. El texto de los documentos sale de las propiedades de los nodos. Está integrado en el pipeline y probado con un driver simulado; su validación contra el grafo real sigue pendiente.
+  - **GraphRAG** ([spec](specs/motor-graphrag.md)): utiliza Neo4j para buscar las normas citadas en la pregunta y recuperar sus relaciones directas, a un salto, mediante consultas Cypher fijas de solo lectura que no dependen del esquema del grafo. El texto de los documentos sale de las propiedades de los nodos. 
   - Reciben: la consulta reformulada y el borrador.
   - Producen: documentos con título, URL y texto (en B, con su `file_id`); la ruta A añade la respuesta de Lynx y la ruta C las relaciones en forma de hechos ("A -[MODIFICA]-> B"). Si se encuentran fuentes, sustituyen al borrador.
 
-- **Filtro antirruido y comprobación de contenido** ([ADR](decisions/filtro-validador-adr.md)): en la ruta A, una clasificación binaria (JEV) evalúa si la respuesta de Lynx es relevante, utilizando los fragmentos como contexto; si el juez falla, la respuesta se descarta. En las rutas B y C se comprueba que los documentos tengan título y contenido, conservando las coincidencias de metadatos o las relaciones del grafo sin aplicar el filtro temático del LLM. Esta fase evalúa relevancia o disponibilidad de contenido, no la veracidad jurídica de la información.
+- **Filtro antirruido y comprobación de contenido** ([ADR](decisions/filtro-validador-adr.md)): en la ruta A, una clasificación binaria (JEV) evalúa si la respuesta de Lynx es relevante, utilizando los fragmentos como contexto; si el juez falla, la respuesta se descarta. En las rutas B y C se comprueba que los documentos tengan título y contenido, conservando las coincidencias de metadatos o las relaciones del grafo sin aplicar el filtro temático del LLM. 
   - Recibe: los resultados del motor elegido y la consulta.
   - Produce: las evidencias que se conservan, con sus metadatos; si no queda ninguna, una lista vacía.
 
-- **Generación multi-evidencia:** utiliza un LLM para elaborar respuestas a partir de múltiples fragmentos seleccionados, incluso cuando proceden de documentos diferentes. Solicita citas con el formato `[Doc N, Chunk M]`, títulos y URLs cuando estén disponibles, aunque no comprueba que el modelo las incluya. Si no hay evidencias, pide al modelo que diga que no se ha consultado ningún documento. Si la llamada falla o devuelve texto vacío, conserva el borrador, que puede no estar verificado: cuando no se encontraron fuentes, es el borrador hipotético del enrutador. En la ruta B, si la respuesta omite títulos de las publicaciones seleccionadas, el pipeline devuelve el listado construido con los resultados recuperados. La corrección general de las afirmaciones y citas no se valida automáticamente.
+- **Generación multi-evidencia:** utiliza un LLM para elaborar respuestas a partir de múltiples fragmentos seleccionados, incluso cuando proceden de documentos diferentes. Solicita citas con el formato `[Doc N, Chunk M]`, títulos y URLs cuando estén disponibles, aunque no comprueba que el modelo las incluya. Si no hay evidencias, pide al modelo que diga que no se ha consultado ningún documento. Si la llamada falla o devuelve texto vacío, conserva el borrador, que puede no estar verificado: cuando no se encontraron fuentes, es el borrador hipotético del enrutador. En la ruta B, si la respuesta omite títulos de las publicaciones seleccionadas, el pipeline devuelve el listado construido con los resultados recuperados. 
   - Recibe: la consulta, las evidencias filtradas y el borrador.
   - Produce: la respuesta final con citas, y el registro del turno para la memoria.
 
-- **Servicios compartidos:** las llamadas directas a los modelos se centralizan en `_call_llm`, usando Ollama mediante LiteLLM con un único modelo para todas las fases (`OLLAMA_MODEL`; `qwen2.5:0.5b` por defecto y Salamandra 2B en nuestras pruebas). La configuración está en `src/config.py` y Langfuse proporciona trazabilidad opcional. Si Ollama no responde, el error se propaga y el turno falla. Son servicios transversales a las cinco fases.
+- **Servicios compartidos:** las llamadas directas a los modelos se centralizan en `_call_llm`, usando Ollama mediante LiteLLM con un único modelo para todas las fases (`OLLAMA_MODEL`; `qwen2.5:0.5b` por defecto y Salamandra 2B en nuestras pruebas). La configuración está en `src/config.py`. Si Ollama no responde, el error se propaga y el turno falla.
 
 ## Flujo entre componentes
 
