@@ -6,7 +6,7 @@ Este proyecto se enmarca en el caso de uso 9 (CU-9), en colaboración con la emp
 ## ¿Qué problema resuelve?
 El problema principal consistía en que el sistema RAG anterior, llamado Lynx, era muy simple. En casos complejos, como la consulta de múltiples documentos, cruces de información o en conversaciones con contextos muy largos, el modelo se perdía y no era capaz de formular una respuesta correcta.
 
-Como solución hemos decidido crear un sistema más completo de cinco fases que clasifique una consulta mediante reglas y el análisis de una respuestas hipotética como borrador, y la redirija al motor de búsqueda adecuado según el tipo de información que necesita. Existen tres posibles vías dentro de este motor de búsqueda: RAG tradicional, ElasticSearch y GraphRAG.
+Como solución hemos decidido crear un sistema más completo de cinco fases: memoria de sesión, enrutamiento, recuperación, filtrado y generación (detalladas en «Nuestra solución»). El enrutador clasifica la consulta mediante reglas y el análisis de una respuesta hipotética como borrador, y la redirige al motor de recuperación adecuado según el tipo de información que necesita. Dentro de la fase de recuperación existen tres mecanismos: RAG tradicional, Elasticsearch y GraphRAG.
 
 A) El primero es el **RAG tradicional** existente en Lynx, que integramos mediante su API para recuperar una respuesta y los fragmentos de texto utilizados cuando se buscan datos específicos, como el plazo de solicitud de una ayuda.
 
@@ -35,7 +35,9 @@ La solución se estructura en cinco fases:
 4. Filtrado de relevancia de las evidencias
 5. Generación de respuestas fundamentadas.
 
-La principal innovación consiste en combinar diferentes mecanismos de recuperación (RAG tradicional, Elasticsearch y GraphRAG) según el tipo de consulta del usuario. Además, incorpora un sistema de memoria contextual (lista de documentos recientes más relevantes durante la conversación) y un filtro de relevancia (modelo binario al estilo de JEV para indicar si una pieza de información es o no relevante) para gestionar conversaciones extensas, consultar múltiples documentos y reducir la incorporación de información irrelevante.
+El diagrama de arquitectura, la descripción de cada componente y el flujo entre ellos están en [ARCHITECTURE.md](ARCHITECTURE.md), y las decisiones de implementación en [decisions/](decisions/).
+
+La principal innovación consiste en combinar diferentes mecanismos de recuperación (RAG tradicional, Elasticsearch y GraphRAG) según el tipo de consulta del usuario. Además, incorpora un sistema de memoria contextual (lista de documentos recientes más relevantes durante la conversación) y un filtro de relevancia (JEV, un modelo binario que indica si una pieza de información es o no relevante; ver [ADR](decisions/filtro-validador-adr.md)) para gestionar conversaciones extensas, consultar múltiples documentos y reducir la incorporación de información irrelevante.
 
 ---
 
@@ -47,8 +49,8 @@ Dentro del proyecto incluimos:
 - La gestión de memoria conversacional, mediante resúmenes acumulativos, turnos recientes y metadatos de documentos relacionados, para poder hacer preguntas de seguimiento sin perder el contexto.
 - Un enrutador agéntico que combina reglas y un modelo de lenguaje para elegir entre los tres motores de recuperación: el RAG tradicional para datos concretos o búsquedas por contenido, Elasticsearch para listados basados en metadatos, y GraphRAG para consultar las relaciones de las normas citadas.
 - La integración del RAG tradicional de Imaxin, aprovechando la implementación existente en lugar de desarrollarlo desde cero.
-- El motor de Elasticsearch descrito en [su guía](src/retrieval_engine/elastic_search/README.md), que permite filtrar por entidad, sección, subsección, fecha, idioma e identificadores en el índice `doga-publications`. El buscador recupera todos los fragmentos coincidentes; el pipeline los agrupa por `file_id` y conserva hasta 20 publicaciones y dos fragmentos por publicación para la generación. El idioma es un filtro opcional. Quedan pendientes los recuentos exhaustivos de publicaciones únicas y la indicación del total cuando el listado esté limitado.
-- El motor GraphRAG descrito en [su guía](README_GRAPHRAG.md), que ejecuta consultas Cypher de solo lectura sobre Neo4j para recuperar las relaciones directas de una norma, por ejemplo, con las disposiciones que la modifican o derogan. Está integrado en el pipeline y probado con un driver simulado; sigue pendiente contrastarlo con el esquema y los datos del grafo real.
+- El motor de Elasticsearch descrito en su guía (`src/retrieval_engine/elastic_search/README.md` en el repositorio del código), que permite filtrar por entidad, sección, subsección, fecha, idioma e identificadores en el índice `doga-publications`. El buscador recupera todos los fragmentos coincidentes; el pipeline los agrupa por `file_id` y conserva hasta 20 publicaciones y dos fragmentos por publicación para la generación. El idioma es un filtro opcional. Quedan pendientes los recuentos exhaustivos de publicaciones únicas y la indicación del total cuando el listado esté limitado.
+- El motor GraphRAG descrito en su guía (`README_GRAPHRAG.md` en el repositorio del código), que ejecuta consultas Cypher de solo lectura sobre Neo4j para recuperar las relaciones directas de una norma, por ejemplo, con las disposiciones que la modifican o derogan. Está integrado en el pipeline y probado con un driver simulado; sigue pendiente contrastarlo con el esquema y los datos del grafo real.
 - El filtro de relevancia para la respuesta de Lynx y la generación que solicita citas a los documentos utilizados. En las rutas de Elasticsearch y GraphRAG, el pipeline comprueba que haya título y contenido y conserva las coincidencias de metadatos o las relaciones del grafo, sin aplicar el filtro temático del modelo. Para los listados de Elasticsearch, si la respuesta generada omite títulos de las publicaciones seleccionadas, se devuelve el listado construido a partir de los resultados recuperados.
 - La evaluación de los módulos y del pipeline con pruebas automatizadas y mocks, junto con ejemplos por consola para ejecutar las cinco fases. La evaluación completa de la calidad de las respuestas, la exactitud de los recuentos, los tiempos de respuesta y el funcionamiento de GraphRAG con datos reales sigue pendiente.
 
@@ -71,7 +73,34 @@ El trabajo depende del acceso autorizado a los servicios y datos de Imaxin, de l
 ---
 
 ## Estructura del repositorio:
-La estructura principal actual, resumida, es:
+Este repositorio contiene la documentación de la entrega, organizada así:
+
+```text
+cu-09-graphrag-dog/
+├── README.md
+├── ARCHITECTURE.md
+├── specs/
+│   ├── memoria-sesion.md
+│   ├── enrutador-agentico.md
+│   ├── elasticsearch-listados-agregaciones.md
+│   └── motor-graphrag.md
+├── decisions/
+│   ├── llm-extrae-parametros-codigo-construye-consultas.md
+│   └── filtro-validador-adr.md
+└── presentacion/
+    └── presentacion.md
+```
+
+- [README.md](README.md): explica el caso de uso, el problema que queremos resolver, la motivación del equipo y los límites del proyecto.
+- [ARCHITECTURE.md](ARCHITECTURE.md): describe las cinco fases de la solución, sus componentes y cómo se comunican entre sí.
+- [specs/](specs/): contiene las especificaciones, con sus responsabilidades, restricciones y criterios de aceptación, de la [memoria de sesión](specs/memoria-sesion.md) (Fase 1), el [enrutador agéntico](specs/enrutador-agentico.md) (Fase 2) y los motores de [Elasticsearch](specs/elasticsearch-listados-agregaciones.md) y [GraphRAG](specs/motor-graphrag.md) (Fase 3).
+- [decisions/](decisions/): recoge las decisiones de implementación (ADRs), con su motivación, las alternativas consideradas y referencias:
+  - [El LLM extrae parámetros y el código construye las consultas](decisions/llm-extrae-parametros-codigo-construye-consultas.md): por qué los motores de Elasticsearch y GraphRAG no dejan que el LLM escriba consultas DSL o Cypher.
+  - [Filtro validador con un LLM como juez](decisions/filtro-validador-adr.md): cómo funciona el JEV de la Fase 4 y por qué solo se aplica a la ruta A.
+- [presentacion/](presentacion/): carpeta destinada a la presentación y los recursos de la demo. Actualmente contiene una nota de ejemplo con las indicaciones para prepararla.
+
+### Código del proyecto
+El código está en un repositorio aparte (`4aac/cu-09`), que no forma parte de esta entrega, así que las rutas siguientes no se pueden abrir desde aquí. Su estructura principal, resumida, es:
 
 ```text
 cu-09/
@@ -94,26 +123,9 @@ cu-09/
 └── tests/
 ```
 
-- [README.md](README.md): describe la instalación, la configuración compartida, las cinco fases y la ejecución del pipeline.
-- [src/pipeline/](src/pipeline/): conecta la memoria, el enrutador, los motores, el filtrado y la generación de respuestas.
-- [src/deep_memory/](src/deep_memory/), [src/router/](src/router/), [src/retrieval_engine/](src/retrieval_engine/), [src/noise_filter/](src/noise_filter/) y [src/final_response/](src/final_response/): contienen los componentes de las cinco fases y sus guías disponibles.
-- [README_GRAPHRAG.md](README_GRAPHRAG.md) y [README_neo4j.md](README_neo4j.md): explican la ruta C, su configuración y los requisitos de acceso al grafo.
-- [__main__.py](__main__.py): ejecuta ejemplos de las rutas A, B y C y una pregunta de seguimiento, sin entrada interactiva. El indicador `OK` comprueba el enrutamiento, no la calidad factual de la respuesta.
-- [tests/](tests/): contiene las pruebas automatizadas de los componentes y de su integración con mocks.
-├── ARCHITECTURE.md
-├── specs/
-│   ├── elasticsearch-listados-agregaciones.md
-│   └── motor-graphrag.md
-├── decisions/
-│   ├── llm-extrae-parametros-codigo-construye-consultas.md
-│   └── mock-decision.md
-└── presentacion/
-    └── presentacion.md
-```
-
-- [README.md](README.md): explica el caso de uso, el problema que queremos resolver, la motivación del equipo y los límites del proyecto.
-- [ARCHITECTURE.md](ARCHITECTURE.md): describe las cinco fases de la solución, sus componentes y cómo se comunican entre sí.
-- [specs/](specs/): contiene las especificaciones de los motores de Elasticsearch y GraphRAG, con sus responsabilidades, restricciones y criterios de aceptación. Ambos forman parte de la fase de recuperación de información de la arquitectura.
-- [decisions/](decisions/): recoge las decisiones de implementación (ADRs), con su motivación, las alternativas consideradas y referencias:
-  - [El LLM extrae parámetros y el código construye las consultas](decisions/llm-extrae-parametros-codigo-construye-consultas.md): por qué los motores de Elasticsearch y GraphRAG no dejan que el LLM escriba consultas DSL o Cypher.
-- [presentacion/](presentacion/): carpeta destinada a la presentación y los recursos de la demo. Actualmente contiene una nota de ejemplo con las indicaciones para prepararla.
+- `README.md`: describe la instalación, la configuración compartida, las cinco fases y la ejecución del pipeline.
+- `src/pipeline/`: conecta la memoria, el enrutador, los motores, el filtrado y la generación de respuestas.
+- `src/deep_memory/` (Fase 1), `src/router/` (Fase 2), `src/retrieval_engine/` (Fase 3), `src/noise_filter/` (Fase 4) y `src/final_response/` (Fase 5): contienen los componentes de las cinco fases y sus guías disponibles.
+- `README_GRAPHRAG.md` y `README_neo4j.md`: explican la ruta C, su configuración y los requisitos de acceso al grafo.
+- `__main__.py`: ejecuta ejemplos de las rutas A, B y C y una pregunta de seguimiento, sin entrada interactiva. El indicador `OK` comprueba el enrutamiento, no la calidad factual de la respuesta.
+- `tests/`: contiene las pruebas automatizadas de los componentes y de su integración con mocks.

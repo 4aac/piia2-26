@@ -22,7 +22,8 @@ y es nuestro código el que construye la consulta a partir de ese JSON.
 - **GraphRAG:** el LLM solo devuelve las normas que se citan en la pregunta,
   por ejemplo `{"references": ["Ley 2/2016"]}`. Con eso lanzamos dos consultas
   Cypher que ya están escritas en el código: una busca el nodo de la norma y la
-  otra sus relaciones (modifica, deroga...). La norma se pasa como parámetro y
+  otra sus relaciones (modifica, deroga...), de cualquier tipo y a un salto, sin
+  depender de las etiquetas del grafo. La norma se pasa como parámetro y
   las consultas se ejecutan en modo lectura.
 
 ## Motivación
@@ -33,8 +34,9 @@ y es nuestro código el que construye la consulta a partir de ese JSON.
   nadie se daría cuenta. Un JSON con pocos campos sí se puede comprobar: si
   el LLM se inventa un organismo, el código da error en vez de devolver un
   listado incorrecto.
-- **Usamos un modelo pequeño.** Trabajamos con `qwen2.5:0.5b` en Ollama, porque
-  los datos de Imaxin no pueden salir a la nube. Un modelo así no escribe bien
+- **Usamos un modelo pequeño.** Todas las fases usan un mismo modelo local en
+  Ollama (`OLLAMA_MODEL`: `qwen2.5:0.5b` por defecto y Salamandra 2B en nuestras
+  pruebas), porque los datos de Imaxin no pueden salir a la nube. Un modelo así no escribe bien
   una consulta de Elasticsearch o Cypher completa, pero sí puede elegir valores
   de una lista o copiar el nombre de una norma.
 - **No podemos modificar los datos de Imaxin.** Si el LLM generase Cypher,
@@ -50,16 +52,18 @@ y es nuestro código el que construye la consulta a partir de ese JSON.
   incluso obliga a activar `allow_dangerous_requests` para usarlo.
 - **Sacar los filtros solo con reglas o expresiones regulares, sin LLM.** No
   sirve para abreviaturas ("IGAPE") ni para nombres escritos en castellano
-  cuando en el índice están en gallego. La usamos solo como apoyo: si el LLM se
-  olvida de un número de norma tipo `2/2016`, lo cogemos con una regex.
+  cuando en el índice están en gallego. En GraphRAG la usamos solo como apoyo: si
+  el LLM se olvida de un número de norma tipo `2/2016`, lo cogemos con una regex.
 - **Usar búsqueda semántica (el RAG de siempre) también para los listados.**
   Solo devuelve los fragmentos más parecidos, no todos los que cumplen la
   condición. Es justo el problema que tenía Lynx con este tipo de preguntas.
 
 ## Referencias
 
-- Código del proyecto: `src/retrieval_engine/elastic_search/query.py` (construcción
-  y validación de filtros) y `src/retrieval_engine/graph_rag/queries.py`
+- Código del proyecto: `src/retrieval_engine/elastic_search/catalogue.py` (lista
+  de valores del índice), `src/retrieval_engine/elastic_search/query.py`
+  (construcción y validación de filtros), `src/retrieval_engine/graph_rag/entities.py`
+  (extracción de normas y regex) y `src/retrieval_engine/graph_rag/queries.py`
   (consultas Cypher fijas).
 - [Bool query de Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-bool-query.html)
 - [Parámetros en Cypher (Neo4j)](https://neo4j.com/docs/cypher-manual/current/syntax/parameters/)
