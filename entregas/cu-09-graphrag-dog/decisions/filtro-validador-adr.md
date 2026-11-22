@@ -10,13 +10,13 @@ El filtro validador (Fase 4, JEV) usa como juez de relevancia el mismo modelo lo
 
 ## Motivación
 
-- Problemas con modelos pequeños. Es necesario entender la pregunta, ya que en ocasiones el ruido es la respuesta a otra ayuda o norma similar, con muchas palabras en común con la respuesta buscada, y no debe aceptarse a pesar de esto. Los modelos probados con menos parámetros (entre 100M y menos de 2B) tienen problemas para generar veredictos bien formados. Por eso en nuestras pruebas usamos Salamandra 2B para todo el pipeline; `qwen2.5:0.5b` queda solo como valor por defecto de la configuración.
+- **Problemas con modelos pequeños**. Es necesario entender la pregunta, ya que en ocasiones el ruido es la respuesta a otra ayuda o norma similar, con muchas palabras en común con la respuesta buscada, y no debe aceptarse a pesar de esto. Los modelos probados con menos parámetros (entre 100M y menos de 2B) tienen problemas para generar veredictos bien formados. Por eso en nuestras pruebas usamos Salamandra 2B para todo el pipeline; `qwen2.5:0.5b` queda solo como valor por defecto de la configuración.
 
-- Idioma de los documentos. Los documentos del DOG están en gallego y castellano. Salamandra está entrenado por el BSC con un peso importante de lenguas de la península, incluido el gallego, por lo que lo preferimos frente a otros modelos del mismo tamaño entrenados sobre todo en inglés.
+- **Idioma de los documentos**. Los documentos del DOG están en gallego y castellano. Salamandra está entrenado por el BSC con un peso importante de lenguas de la península, incluido el gallego, por lo que lo preferimos frente a otros modelos del mismo tamaño entrenados sobre todo en inglés.
 
-- Normalización de modelos. En el proyecto ya se utiliza Ollama mediante `src/llm_aux.py` (`_call_llm`), con herramientas como Langfuse para el trazado. Esta reutilización evita la necesidad de nuevas dependencias o servicios y enviar documentos fuera.
+- **Normalización de modelos**. En el proyecto ya se utiliza Ollama mediante `src/llm_aux.py` (`_call_llm`), con herramientas como Langfuse para el trazado. Esta reutilización evita la necesidad de nuevas dependencias o servicios y enviar documentos fuera.
 
-- Seguridad de respuesta. Es mejor descartar que aceptar la respuesta en caso de dudas, ya que si el filtro deja pasar ruido, la fase 5 de generación lo citará como fuente, lo cual es sensible al estar tratando con documentación legal. Si no hay documentos citados, debe indicarse en la fase de generación que no se ha encontrado información y no inventar citas o referencias.
+- **Seguridad de respuesta**. Es mejor descartar que aceptar la respuesta en caso de dudas, ya que si el filtro deja pasar ruido, la fase 5 de generación lo citará como fuente, lo cual es sensible al estar tratando con documentación legal. Si no hay documentos citados, debe indicarse en la fase de generación que no se ha encontrado información y no inventar citas o referencias.
 
 ## Alternativas
 
